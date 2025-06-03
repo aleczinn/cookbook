@@ -1,35 +1,38 @@
-import {defineConfig, loadEnv} from 'vite'
+import { defineConfig, loadEnv, type ConfigEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
 
-export default ({mode}) => {
-    process.env = {...process.env, ...loadEnv(mode, process.cwd())};
+// https://vite.dev/config/
+export default ({ mode }: ConfigEnv) => {
+    process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
-    // https://vitejs.dev/config/
     return defineConfig({
+        plugins: [vue()],
         server: {
-            port: 8080
-        },
-        plugins: [
-            vue(),
-        ],
-        resolve: {
-            alias: {
-                '@/': `${path.resolve(__dirname, './src')}`,
-            },
-        },
-        define: {
-            __VUE_I18N_FULL_INSTALL__: true,
-            __VUE_I18N_LEGACY_API__: false,
-            __INTLIFY_PROD_DEVTOOLS__: false,
+            host: '0.0.0.0',
+            port: 5173,
+            proxy: {
+                '/api': {
+                    target: 'http://localhost:3000',
+                    changeOrigin: true,
+                    secure: false
+                }
+            }
         },
         optimizeDeps: {
             include: [
                 'vue',
                 'vue-router'
             ]
+        },
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        'vue-vendor': ['vue', 'vue-router'],
+                        'i18n': ['vue-i18n']
+                    }
+                }
+            }
         }
     })
 }
-
-
